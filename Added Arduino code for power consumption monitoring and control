@@ -1,1 +1,133 @@
+#include<EveryTimer.h>
+EveryTimer timer;
+#define period 1000
+#include<LiquidCrystal.h>
+LiquidCrystal lcd(13, 12, 11, 10, 9, 8);
+#define relay 2
+#define vac A1
+#define amps A0
+int butval;
+//unsigned char a;
+int vacvalue,curvalue;
+int volt_value;
+int amps_value = 0,final_amps=0;
+int unit = 0,amount = 0,cal = 1;
+int a=0,b=0,act=0;
+int sec = 0,sec1=0,c;
+int stat=0;
+void setup() {
+ // put your setup code here, to run once:
+ timer.Every(period,action);
+Serial.begin(9600);
 
+ lcd.begin(16, 2);
+
+ pinMode(relay,OUTPUT);
+ pinMode(vac,INPUT);
+ pinMode(amps,INPUT);
+lcd.setCursor(0,0);
+lcd.print(" SMART EB");
+18
+lcd.setCursor(0,1);
+lcd.print(" METER ");
+digitalWrite(relay,HIGH);
+delay(3000);
+lcd.clear();
+}
+void loop()
+{
+timer.Update();
+Serial.print("SEc 1 :");
+Serial.println(sec1);
+if(sec1>=30 && amps_value>=100){digitalWrite(relay,HIGH);
+Serial.println("BULB OFFED"); stat=1;}
+else if(sec1>=30 && amps_value<=100 &&
+stat==0){digitalWrite(relay,LOW);Serial.println("bulb oned");sec1=0;}
+else if(stat==0){digitalWrite(relay,LOW); Serial.println("bulb last oned");}
+serialEvent();
+//Current ................................................
+
+ amps_value = analogRead(amps);
+ Serial.print("origianl amps:");
+ Serial.println(amps_value);
+ if(amps_value>=30){amps_value=map(amps_value,0,172,0,999);}
+ else{amps_value=80; }
+ Serial.print("amps value :");
+ Serial.println(amps_value);
+19
+// if(final_amps-amps_value>=1){amps_value=final_amps;}
+
+ if(amps_value <= 70){amps_value = 0; volt_value = 0;}
+ else{amps_value = amps_value; volt_value = 230;}
+final_amps=amps_value;
+ volt_value=analogRead(vac);
+Serial.print("Voltage :");
+Serial.println(volt_value);
+if(volt_value<=200){amps_value=0;volt_value=0;}
+ if(sec >= 10)
+ {
+ unit = ((volt_value/100)*amps_value)/100;
+ Serial.print("unit :");
+ Serial.println(unit);
+// b=(b/100);
+ b = b+unit;
+ Serial.print("watts :");
+ Serial.println(b);
+ sec=0;
+ }
+amount=(b*2);
+lcd.setCursor(0,0);lcd.print("V:");
+ if(volt_value <= 9){lcd.print("00");lcd.print(volt_value);}
+ else if(volt_value <= 99){lcd.print("0");lcd.print(volt_value);}
+ else if(volt_value <= 999){lcd.print(volt_value);}
+ lcd.print("V");
+ lcd.setCursor(0,1);lcd.print("A:");
+ if(amps_value <= 9){lcd.print("00");lcd.print(amps_value);}
+20
+ else if(amps_value <= 99){lcd.print("0");lcd.print(amps_value);}
+ else if(amps_value <= 999){lcd.print(amps_value);}
+ lcd.print("mA");
+ lcd.setCursor(10,0);lcd.print("U:");
+ if(b <= 9){lcd.print("00");lcd.print(b);}
+ else if(b <= 99){lcd.print("0");lcd.print(b);}
+ else if(b <= 999){lcd.print(b);}
+ lcd.print("W");
+ lcd.setCursor(10,1);lcd.print("RS:");
+ if(amount <= 9){lcd.print("00");lcd.print(amount);}
+ else if(amount <= 99){lcd.print("0");lcd.print(amount);}
+ else if(amount <= 999){lcd.print(amount);}
+ delay(200);
+ senddata();
+}
+void senddata()
+ {
+ Serial.print('*');
+ if(volt_value <= 9){Serial.print("00");Serial.print(volt_value);}
+ else if(volt_value <= 99){Serial.print("0");Serial.print(volt_value);}
+ else if(volt_value <= 999){Serial.print(volt_value);}
+ if(b <= 9){Serial.print("00");Serial.print(b);}
+ else if(b <= 99){Serial.print("0");Serial.print(b);}
+ else if(b <= 999){Serial.print(b);}
+ if(amps_value <= 9){Serial.print("00");Serial.print(amps_value);}
+ else if(amps_value <= 99){Serial.print("0");Serial.print(amps_value);}
+ else if(amps_value <= 999){Serial.print(amps_value);}
+ if(amount <= 9){Serial.print("00");Serial.print(amount);}
+ else if(amount <= 99){Serial.print("0");Serial.print(amount);}
+ else if(amount <= 999){Serial.print(amount);}
+21
+ if(stat <= 9){Serial.print("00");Serial.print(stat);}
+ else if(stat <= 99){Serial.print("0");Serial.print(stat);}
+ else if(stat <= 999){Serial.print(stat);}
+ }
+void serialEvent()
+{
+ while(Serial.available())
+ {
+ a = Serial.read();
+ }
+}
+void action()
+{
+ sec++;
+ sec1++;
+}
